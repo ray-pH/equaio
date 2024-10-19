@@ -1,4 +1,5 @@
 use super::json;
+use super::utils;
 use dioxus::prelude::*;
 use dioxus_logger::tracing::info;
 use equaio;
@@ -56,18 +57,20 @@ pub fn Worksheet(ws_data: WorksheetData) -> Element {
         .map(|(i,(action, expr))| (i, action.to_string(), Block::from_root_expression(expr, &block_ctx)))
         .collect::<Vec<_>>();
     
-    rsx!(
-        div {
+    rsx!( div {
         class: "expression-sequence-container",
-        for (i, block) in indexed_blocks {
-            Block {
-                block: block, 
-                active_address: if i == last_index { Some(active_address) } else { None },
-                on_address_update: move |(addr, bool)| {
-                    if bool {
-                        if !active_address.read().contains(&addr) { active_address.write().push(addr); }
-                    } else {
-                        if active_address.read().contains(&addr) { active_address.write().retain(|a| a != &addr); }
+        div {
+            class: "expression-sequence-history-container",
+            for (i, block) in indexed_blocks {
+                Block {
+                    block: block, 
+                    active_address: if i == last_index { Some(active_address) } else { None },
+                    on_address_update: move |(addr, bool)| {
+                        if bool {
+                            if !active_address.read().contains(&addr) { active_address.write().push(addr); }
+                        } else {
+                            if active_address.read().contains(&addr) { active_address.write().retain(|a| a != &addr); }
+                        }
                     }
                 }
             }
@@ -103,13 +106,14 @@ fn Block(block: Block, active_address: Option<Signal<Vec<Address>>>, on_address_
             let mut classlist = vec!["block-symbol"];
             if is_clickable { classlist.push("clickable"); }
             if is_active { classlist.push("active"); }
+            let symbol = utils::convert_mathvar(block.symbol.unwrap_or_default());
             return rsx! {
                 div {
                     class: classlist.join(" "),
                     onclick: move |_| if is_clickable { 
                         on_address_update.call((block.address.clone(), !is_active))
                     },
-                    "{block.symbol.unwrap_or_default()}"
+                    "{symbol}"
                 }
             }
         }

@@ -1,5 +1,6 @@
 .block-symbol {
-    padding: 0.6em;
+    font-family: 'LatinModern';
+    padding: 0.4em;
     border-radius: 0.5em;
 }
 .block-symbol.clickable {
