@@ -17,7 +17,6 @@ asset_dir = "assets"
 
 # HTML title tag content
 title = "equaio"
-base_path = "equaio"
 
 [web.watcher]
 
