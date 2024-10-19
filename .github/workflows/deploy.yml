@@ -1,0 +1,51 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main 
+      
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: Install dioxus-cli
+      run: cargo install dioxus-cli
+
+    - name: Build for web
+      run: dx build --release --platform web
+
+    - name: Upload Web Build Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: web-build
+        path: dist
+      
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write 
+
+    steps:
+      - name: Download Web Build Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: web-build
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist
