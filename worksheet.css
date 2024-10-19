@@ -1,0 +1,25 @@
+.expression-sequence-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.expression-sequence-history-container {
+    font-size: 1.2em;
+}
+.possible-actions-container {
+    margin-top: 0.5em;
+}
+.possible-action-button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 0.1em 2em;
+    border-radius: 2em;
+    min-width: 40em;
+    background-color: rgba(0,0,0,0.1);
+}
+.possible-action-button:hover {
+    background-color: rgba(0,0,0,0.2);
+}
