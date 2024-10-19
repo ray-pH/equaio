@@ -1,0 +1,21 @@
+.block-symbol {
+    padding: 0.6em;
+    border-radius: 0.5em;
+}
+.block-symbol.clickable {
+    cursor: pointer;
+}
+.block-symbol.clickable:hover {
+    background-color: rgba(0,0,0,0.1);
+}
+.block-symbol.clickable.active {
+    background-color: #FFDBCE;
+}
+.block-symbol.clickable.active:hover {
+    background-color: #EECCBF;
+}
+
+.block-horizontal {
+    display: flex;
+    flex-direction: row;
+}
