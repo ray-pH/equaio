@@ -7,7 +7,6 @@ use std::collections::HashMap;
 
 use dioxus::prelude::*;
 use dioxus_logger::tracing::{info, Level};
-use equaio::vec_strings;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Routable, Debug, PartialEq)]
@@ -33,9 +32,6 @@ fn main() {
 
 fn App() -> Element {
     rsx! {
-        link { rel: "stylesheet", href: "main.css" }
-        link { rel: "stylesheet", href: "block.css" }
-        link { rel: "stylesheet", href: "worksheet.css" }
         Router::<Route> {}
     }
 }
@@ -82,16 +78,12 @@ fn ProblemPage(problem_id: String) -> Element {
     let problems_data_map: HashMap<String, worksheet::WorksheetData> = serde_json::from_str(json::PROBLEMS_DATA_MAP).unwrap_or_default();
     if let Some(ws_data) = problems_data_map.get(&problem_id) {
         rsx! {
-            link { rel: "stylesheet", href: "../main.css" }
-            link { rel: "stylesheet", href: "../block.css" }
-            link { rel: "stylesheet", href: "../worksheet.css" }
             worksheet::Worksheet {
                 ws_data: ws_data.clone(),
             }
         }
     } else {
         rsx! {
-            link { rel: "stylesheet", href: "../main.css" }
             div {
                 "ERROR: problem not found"
             }

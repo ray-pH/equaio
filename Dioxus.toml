@@ -16,7 +16,8 @@ asset_dir = "assets"
 [web.app]
 
 # HTML title tag content
-title = "equaio-dx"
+title = "equaio"
+base_path = "equaio"
 
 [web.watcher]
 
@@ -31,7 +32,11 @@ watch_path = ["src", "assets"]
 
 # CSS style file
 
-style = []
+style = [
+  "/main.css",
+  "/block.css",
+  "/worksheet.css",
+]
 
 # Javascript code file
 script = []
