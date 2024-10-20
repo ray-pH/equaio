@@ -77,7 +77,7 @@ pub const PROBLEMS_DATA_MAP: &str = r#"
     },
     "logic0": {
         "label": "Simplify the expression",
-        "rule": "algebra_simplify",
+        "rule": "logic",
         "variables": ["P", "Q"],
         "initial_expressions": ["(~P | Q) & (P | Q)"]
     }
@@ -88,7 +88,10 @@ pub const ALGEBRA_RULES: &str = r#"
 {
     "name": "algebra",
     "context": {
-        "base": "arithmetic"
+        "unary_ops": ["-"],
+        "binary_ops": ["+", "-", "*", "/"],
+        "assoc_ops": ["+", "*"],
+        "handle_numerics": true
     },
     "variations": [
         {"expr":  "A + B = B + A"},

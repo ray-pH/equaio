@@ -1,10 +1,12 @@
 use super::json;
 use super::utils;
+use std::collections::HashMap;
 use dioxus::prelude::*;
 use dioxus_logger::tracing::info;
 use equaio;
 use equaio::block::Block;
 use equaio::expression::Address;
+use equaio::{pair_map, vec_strings, vec_index_map};
 use serde::{Deserialize, Serialize};
 
 
@@ -17,35 +19,41 @@ pub struct WorksheetData {
     pub initial_expressions: Vec<String>,
 }
 
-fn get_algebra_ruleset(_auto_simplify: bool) -> equaio::rule::RuleSet {
+fn get_ruleset(_rulename: String) -> equaio::rule::RuleSet {
+    // TODO: load properly
     let rulestr = json::ALGEBRA_RULES;
     let ruleset = equaio::rule::parse_ruleset_from_json(&rulestr);
     return ruleset.unwrap();
 }
-fn init_algebra_worksheet(variables: Vec<String>, auto_simplify: bool) -> equaio::worksheet::Worksheet {
+fn init_worksheet(ws_data: WorksheetData) -> equaio::worksheet::Worksheet {
+    let ruleset = get_ruleset(ws_data.rule);
     let mut ws = equaio::worksheet::Worksheet::new();
-    let ruleset = get_algebra_ruleset(auto_simplify);
-    let ctx = equaio::arithmetic::get_arithmetic_ctx().add_params(variables);
     ws.set_ruleset(ruleset);
-    ws.set_expression_context(ctx);
+    // TODO: load general normalization and possible actions functions
     ws.set_normalization_function(|expr,ctx| expr.normalize_algebra(ctx));
     ws.set_get_possible_actions_function(|expr,ctx,addr_vec| 
         equaio::algebra::get_possible_actions::algebra(expr,ctx,addr_vec));
+    
+    let ctx = ws.get_expression_context().add_params(ws_data.variables);
+    for expr_str in ws_data.initial_expressions {
+        let expr = equaio::parser::parser::to_expression(expr_str, &ctx);
+        if let Some(expr) = expr { ws.introduce_expression(expr); }
+    }
     return ws;
 }
 
 #[component]
 pub fn Worksheet(ws_data: WorksheetData) -> Element {
-    //TODO: separate out the initialization of the worksheet from the rendering
-    let ctx = equaio::arithmetic::get_arithmetic_ctx().add_params(ws_data.variables.clone()); // debug
-    let mut ws = use_signal(|| init_algebra_worksheet(ws_data.variables, false));
-    for expr_str in ws_data.initial_expressions {
-        let expr = equaio::parser::parser::to_expression(expr_str, &ctx);
-        if let Some(expr) = expr { ws.write().introduce_expression(expr); }
-    }
+    let mut ws = use_signal(|| init_worksheet(ws_data));
+    
     let seq = ws.write().get(0).unwrap(); // debug
     let expressions = seq.history.iter().map(|line| &line.expr).collect::<Vec<_>>();
-    let block_ctx = equaio::block::BlockContext::default();
+    let block_ctx = equaio::block::BlockContext {
+        inverse_ops: pair_map![("+", "-"), ("*", "/")],
+        fraction_ops: vec_strings!["/"],
+        conceal_ops: vec_strings!["*"],
+        op_precedence: vec_index_map!["-", "+", "/", "*"]
+    };
     let indexed_blocks = expressions.iter()
         .enumerate().map(|(i,expr)| (i, Block::from_root_expression(expr, &block_ctx))).collect::<Vec<_>>();
     let last_index = indexed_blocks.len() - 1;
@@ -95,6 +103,7 @@ pub fn Worksheet(ws_data: WorksheetData) -> Element {
         }
     })
 }
+
 
 #[component]
 fn Block(block: Block, active_address: Option<Signal<Vec<Address>>>, on_address_update: EventHandler<(Address, bool)>) -> Element {
