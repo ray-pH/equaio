@@ -167,7 +167,28 @@ fn Block(block: Block, active_address: Option<Signal<Vec<Address>>>, on_address_
             };
         }
         BlockType::FractionContainer => {
-            return rsx! { span { "todo: FractionContainer"} }
+            let children = block.children.unwrap_or_default();
+            let numerator = children.get(0);
+            let denominator = children.get(1);
+            if numerator.is_none() || denominator.is_none() { return rsx! { span { "ERROR: FractionContainer"} } }
+            let numerator = numerator.unwrap();
+            let denominator = denominator.unwrap();
+            return rsx! {
+                div {
+                    class: "block-fraction",
+                    div {
+                        class: "block-fraction-numerator",
+                        Block { block: numerator.clone(), active_address, on_address_update },
+                    }
+                    div {
+                        class: "block-fraction-line"
+                    }
+                    div {
+                        class: "block-fraction-denominator",
+                        Block { block: denominator.clone(), active_address, on_address_update }
+                    }
+                }
+            };
         }
     }
 }

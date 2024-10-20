@@ -20,3 +20,16 @@
     display: flex;
     flex-direction: row;
 }
+
+.block-fraction {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.4em;
+}
+.block-fraction-line {
+    width: 100%; /* Adjust to be the width of the numerator or denominator */
+    height: 1px;
+    background-color: black;   
+}
