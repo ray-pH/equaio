@@ -137,11 +137,13 @@ pub fn Worksheet(ws_data: WorksheetData) -> Element {
 #[component]
 fn Block(block: Block, active_address: Option<Signal<Vec<Address>>>, on_address_update: EventHandler<(Address, bool)>) -> Element {
     use equaio::block::BlockType;
+    let mut classlist = vec![];
+    if block.has_parenthesis { classlist.push("parenthesis"); }
     match block.block_type {
         BlockType::Symbol => {
+            classlist.push("block-symbol");
             let is_clickable = active_address.is_some();
             let is_active = is_clickable && active_address.unwrap().read().contains(&block.address);
-            let mut classlist = vec!["block-symbol"];
             if is_clickable { classlist.push("clickable"); }
             if is_active { classlist.push("active"); }
             let symbol = utils::convert_mathvar(block.symbol.unwrap_or_default());
@@ -156,10 +158,11 @@ fn Block(block: Block, active_address: Option<Signal<Vec<Address>>>, on_address_
             }
         }
         BlockType::HorizontalContainer => {
+            classlist.push("block-horizontal");
             let children = block.children.unwrap_or_default();
             return rsx! {
                 div {
-                    class: "block-horizontal",
+                    class: classlist.join(" "),
                     for child in children {
                         Block { block: child, active_address, on_address_update }
                     }
@@ -167,6 +170,7 @@ fn Block(block: Block, active_address: Option<Signal<Vec<Address>>>, on_address_
             };
         }
         BlockType::FractionContainer => {
+            classlist.push("block-fraction");
             let children = block.children.unwrap_or_default();
             let numerator = children.get(0);
             let denominator = children.get(1);
@@ -175,7 +179,7 @@ fn Block(block: Block, active_address: Option<Signal<Vec<Address>>>, on_address_
             let denominator = denominator.unwrap();
             return rsx! {
                 div {
-                    class: "block-fraction",
+                    class: classlist.join(" "),
                     div {
                         class: "block-fraction-numerator",
                         Block { block: numerator.clone(), active_address, on_address_update },

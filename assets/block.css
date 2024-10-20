@@ -15,10 +15,27 @@
 .block-symbol.clickable.active:hover {
     background-color: #EECCBF;
 }
+.block-symbol.parenthesis::before {
+    font-family: 'LatinModern';
+    content: "(";
+}
+.block-symbol.parenthesis::after {
+    font-family: 'LatinModern';
+    content: ")";
+}
 
 .block-horizontal {
+    align-items: center;
     display: flex;
     flex-direction: row;
+}
+.block-horizontal.parenthesis::before {
+    font-family: 'LatinModern';
+    content: "(";
+}
+.block-horizontal.parenthesis::after {
+    font-family: 'LatinModern';
+    content: ")";
 }
 
 .block-fraction {
