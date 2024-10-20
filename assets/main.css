@@ -11,32 +11,32 @@ body {
 }
 
 #main {
-    margin: 0;
-    margin-top: 2em;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    margin: 4em auto;
+    width: fit-content;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-menu {
+    width: fit-content;
 }
 
 .category-container {
     margin-top: 2em;
     display: flex;
     flex-direction: column;
-    /* width: 100%; */
-    min-width: 40em;
+    width: min(40em, 80vw);
     justify-content: center;
     align-items: center;
     gap: 0.5em;
 }
 .category-header {
-    font-size: 1.5em;
+    font-size: 1.2em;
 }
 .category-button {
     all: unset;
     cursor: pointer;
     width: 100%;
+    box-sizing: border-box;
     display: flex;
     justify-content: space-between;
     padding: 0.8em 2em;

@@ -32,6 +32,9 @@ fn main() {
 
 fn App() -> Element {
     rsx! {
+        link { rel: "stylesheet", href: "/main.css" }
+        link { rel: "stylesheet", href: "/block.css" }
+        link { rel: "stylesheet", href: "/worksheet.css" }
         Router::<Route> {}
     }
 }
@@ -45,7 +48,7 @@ fn Home() -> Element {
     let convert_mathvar = |s: String| utils::convert_mathvar(s);
     rsx! {
         div {
-            id: "main",
+            class: "main-menu",
             for cat in categories {
                 div {
                     class: "category-container",
