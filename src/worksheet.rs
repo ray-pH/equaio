@@ -55,7 +55,7 @@ pub fn Worksheet(ws_data: WorksheetData) -> Element {
         op_precedence: vec_index_map!["-", "+", "/", "*"]
     };
     let indexed_blocks = expressions.iter()
-        .enumerate().map(|(i,expr)| (i, Block::from_root_expression(expr, &block_ctx))).collect::<Vec<_>>();
+        .enumerate().map(|(i,expr)| (i, Block::from_root_expression_to_alignable_blocks(expr, &block_ctx))).collect::<Vec<_>>();
     let last_index = indexed_blocks.len() - 1;
     
     let mut active_address = use_signal(|| Vec::<Address>::new());
@@ -65,19 +65,49 @@ pub fn Worksheet(ws_data: WorksheetData) -> Element {
         .map(|(i,(action, expr))| (i, action.to_string(), Block::from_root_expression(expr, &block_ctx)))
         .collect::<Vec<_>>();
     
+    let address_update_handler: EventHandler<(Address, bool)> = EventHandler::new(move |(addr, bool)| {
+        if bool {
+            if !active_address.read().contains(&addr) { active_address.write().push(addr); }
+        } else {
+            if active_address.read().contains(&addr) { active_address.write().retain(|a| a != &addr); }
+        }
+    });
+    
     rsx!( div {
         class: "expression-sequence-container",
         div {
             class: "expression-sequence-history-container",
-            for (i, block) in indexed_blocks {
-                Block {
-                    block: block, 
-                    active_address: if i == last_index { Some(active_address) } else { None },
-                    on_address_update: move |(addr, bool)| {
-                        if bool {
-                            if !active_address.read().contains(&addr) { active_address.write().push(addr); }
-                        } else {
-                            if active_address.read().contains(&addr) { active_address.write().retain(|a| a != &addr); }
+            for (i, (lhs, mid, rhs)) in indexed_blocks {
+                div {
+                    class: "expression-line",
+                    div {
+                        class: "expression-line-lhs",
+                        if lhs.is_some() {
+                            Block {
+                                block: lhs.unwrap(), 
+                                active_address: if i == last_index { Some(active_address) } else { None },
+                                on_address_update: move |evt| address_update_handler.call(evt)
+                            }
+                        }
+                    }
+                    div {
+                        class: "expression-line-mid",
+                        if mid.is_some() {
+                            Block {
+                                block: mid.unwrap(), 
+                                active_address: if i == last_index { Some(active_address) } else { None },
+                                on_address_update: move |evt| address_update_handler.call(evt)
+                            }
+                        }
+                    }
+                    div {
+                        class: "expression-line-rhs",
+                        if rhs.is_some() {
+                            Block {
+                                block: rhs.unwrap(), 
+                                active_address: if i == last_index { Some(active_address) } else { None },
+                                on_address_update: move |evt| address_update_handler.call(evt)
+                            }
                         }
                     }
                 }
@@ -103,7 +133,6 @@ pub fn Worksheet(ws_data: WorksheetData) -> Element {
         }
     })
 }
-
 
 #[component]
 fn Block(block: Block, active_address: Option<Signal<Vec<Address>>>, on_address_update: EventHandler<(Address, bool)>) -> Element {
