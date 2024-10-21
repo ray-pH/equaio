@@ -5,18 +5,23 @@
   font-style: normal;
 }
 
+:root {
+    --background-color: #FFF8F6;
+    --secondary-color: #FFDBCE;
+    --secondary-color-hover: #EECCBF;
+}
+
 
 body {
-    background-color: #FFF8F6;
+    background-color: var(--background-color);
 }
 
 #main {
-    margin: 4em auto;
-    width: fit-content;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .main-menu {
+    margin: 4em auto;
     width: fit-content;
 }
 
@@ -40,12 +45,28 @@ body {
     display: flex;
     justify-content: space-between;
     padding: 0.8em 2em;
-    background-color: #FFDBCE;
+    background-color: var(--secondary-color);
     border-radius: 1em;
 }
 .category-button:hover {
-    background-color: #EECCBF;
+    background-color: var(--secondary-color-hover);
 }
 .problem-sublabel {
     font-family: 'LatinModern', serif;
+}
+
+.navbar {
+    margin-bottom: 1em;
+}
+.navbar-button {
+    all: unset;
+    padding: 1em;
+    border-radius: 0.5em;
+    cursor: pointer;
+    background-color: var(--secondary-color);
+}
+.navbar-button:hover {
+    background-color: var(--secondary-color-hover);
+}
+.navbar-button.left {
 }

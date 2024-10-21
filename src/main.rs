@@ -9,19 +9,19 @@ use dioxus::prelude::*;
 use dioxus_logger::tracing::{info, Level};
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Routable, Debug, PartialEq)]
-enum Route {
-    #[route("/")]
-    Home {},
-    #[route("/problems/:problem_id")]
-    ProblemPage { problem_id: String },
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct CategoryData {
     pub name: String,
     pub problem_ids: Vec<String>,
 }
+
+#[derive(Clone, PartialEq, Default)]
+enum Route {
+    #[default]
+    Home,
+    ProblemPage { problem_id: String },
+}
+type Router = Signal<Vec<Route>>;
 
 fn main() {
     // Init logger
@@ -31,17 +31,21 @@ fn main() {
 }
 
 fn App() -> Element {
+    let router: Router = use_signal(|| vec![Route::Home]);
     rsx! {
-        link { rel: "stylesheet", href: "/main.css" }
-        link { rel: "stylesheet", href: "/block.css" }
-        link { rel: "stylesheet", href: "/worksheet.css" }
-        Router::<Route> {}
+        link { rel: "stylesheet", href: "main.css" }
+        link { rel: "stylesheet", href: "block.css" }
+        link { rel: "stylesheet", href: "worksheet.css" }
+        match router.read().last().cloned().unwrap_or_default() {
+            Route::Home => rsx! { Home { router } },
+            Route::ProblemPage { problem_id } => rsx! { ProblemPage { router, problem_id } },
+        }
     }
 }
 
 
 #[component]
-fn Home() -> Element {
+fn Home(router: Router) -> Element {
     let categories: Result<Vec<CategoryData>, _> = serde_json::from_str(json::MAIN_MENU_DATA);
     let categories = categories.unwrap_or_default();
     let worksheet_data_map: HashMap<String, worksheet::WorksheetData> = serde_json::from_str(json::PROBLEMS_DATA_MAP).unwrap_or_default();
@@ -58,10 +62,10 @@ fn Home() -> Element {
                     }
                     for id in cat.problem_ids {
                         if let Some(ws_data) = worksheet_data_map.get(&id) {
-                            Link {
-                                to: Route::ProblemPage { problem_id: id.clone() },
+                            div {
+                                // to: Route::ProblemPage { problem_id: id.clone() },
                                 class: "category-button",
-                                onclick: move |_| { },
+                                onclick: move |_| { router.write().push(Route::ProblemPage { problem_id: id.clone() }); },
                                 span { "{ws_data.label.clone()}" }
                                 span { 
                                     class: "problem-sublabel",
@@ -77,19 +81,27 @@ fn Home() -> Element {
 }
 
 #[component]
-fn ProblemPage(problem_id: String) -> Element {
+fn ProblemPage(router: Router, problem_id: String) -> Element {
     let problems_data_map: HashMap<String, worksheet::WorksheetData> = serde_json::from_str(json::PROBLEMS_DATA_MAP).unwrap_or_default();
-    if let Some(ws_data) = problems_data_map.get(&problem_id) {
-        rsx! {
+    
+    rsx! {
+        div {
+            class: "navbar",
+            button {
+                class: "navbar-button left",
+                onclick: move |_| { router.write().pop(); },
+                "<"
+            }
+        }
+        if let Some(ws_data) = problems_data_map.get(&problem_id) {
             worksheet::Worksheet {
                 ws_data: ws_data.clone(),
             }
-        }
-    } else {
-        rsx! {
+        } else {
             div {
                 "ERROR: problem not found"
             }
         }
     }
+    
 }
