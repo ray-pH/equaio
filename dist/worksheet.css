@@ -1,0 +1,66 @@
+.expression-sequence-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.expression-sequence-history-container {
+    font-size: 1.2em;
+    display: grid;
+    grid-template-columns: 1em 1fr auto 1fr;
+    align-items: center;
+}
+
+.expression-line {
+    display: contents;
+}
+.expression-line-lhs {
+    grid-column: 2;
+    justify-self: end;
+}
+.expression-line-mid {
+    justify-self: center;
+}
+.expression-line-rhs {
+    justify-self: start;
+}
+
+.expression-line-gap {
+    grid-column: 1 / span 4;
+    height: 1.5em;
+}
+.expression-line-left-bar {
+    background-color: grey;
+    grid-row: span 2;
+    width: 4px;
+    height: 100%;
+    margin-right: 1em;
+    border-radius: 3px;
+}
+.expression-line-action {
+    color: gray;
+    grid-column: 2 / span 3;
+    justify-self: start;
+    font-size: 0.6em;
+}
+
+
+.possible-actions-container {
+    margin-top: 0.5em;
+    width: min(40em, 80vw);
+}
+.possible-action-button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 0.1em 2em;
+    border-radius: 2em;
+    background-color: rgba(0,0,0,0.1);
+}
+.possible-action-button:hover {
+    background-color: rgba(0,0,0,0.2);
+}
+.possible-action-caption {
+    padding:0.5em 0;
+}
