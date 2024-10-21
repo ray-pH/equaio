@@ -1,0 +1,55 @@
+.block-symbol {
+    font-family: 'LatinModern';
+    padding: 0.4em;
+    border-radius: 0.5em;
+}
+.block-symbol.concealed {
+    display: none;
+}
+.block-symbol.clickable {
+    cursor: pointer;
+}
+.block-symbol.clickable:hover {
+    background-color: rgba(0,0,0,0.1);
+}
+.block-symbol.clickable.active {
+    background-color: #FFDBCE;
+}
+.block-symbol.clickable.active:hover {
+    background-color: #EECCBF;
+}
+.block-symbol.parenthesis::before {
+    font-family: 'LatinModern';
+    content: "(";
+}
+.block-symbol.parenthesis::after {
+    font-family: 'LatinModern';
+    content: ")";
+}
+
+.block-horizontal {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+}
+.block-horizontal.parenthesis::before {
+    font-family: 'LatinModern';
+    content: "(";
+}
+.block-horizontal.parenthesis::after {
+    font-family: 'LatinModern';
+    content: ")";
+}
+
+.block-fraction {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.4em;
+}
+.block-fraction-line {
+    width: 100%; /* Adjust to be the width of the numerator or denominator */
+    height: 1px;
+    background-color: black;   
+}
