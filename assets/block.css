@@ -3,6 +3,9 @@
     padding: 0.4em;
     border-radius: 0.5em;
 }
+.block-symbol.concealed {
+    display: none;
+}
 .block-symbol.clickable {
     cursor: pointer;
 }

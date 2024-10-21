@@ -136,9 +136,9 @@ pub fn Worksheet(ws_data: WorksheetData) -> Element {
 
 #[component]
 fn Block(block: Block, active_address: Option<Signal<Vec<Address>>>, on_address_update: EventHandler<(Address, bool)>) -> Element {
-    use equaio::block::BlockType;
+    use equaio::block::{BlockType, BlockTag};
     let mut classlist = vec![];
-    if block.has_parenthesis { classlist.push("parenthesis"); }
+    if block.contains_tag(&BlockTag::Parentheses) { classlist.push("parenthesis"); }
     match block.block_type {
         BlockType::Symbol => {
             classlist.push("block-symbol");
@@ -146,6 +146,7 @@ fn Block(block: Block, active_address: Option<Signal<Vec<Address>>>, on_address_
             let is_active = is_clickable && active_address.unwrap().read().contains(&block.address);
             if is_clickable { classlist.push("clickable"); }
             if is_active { classlist.push("active"); }
+            if block.contains_tag(&BlockTag::Concealed) { classlist.push("concealed") };
             let symbol = utils::convert_mathvar(block.symbol.unwrap_or_default());
             return rsx! {
                 div {

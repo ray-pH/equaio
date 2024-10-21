@@ -2,7 +2,7 @@ pub fn convert_mathvar(original: String) -> String {
     original.chars().map(|c| to_mathvar(c).unwrap_or(c)).collect()
 }
 
-
+#[allow(dead_code)]
 pub fn convert_mathvar_vec(original: String, variables: Vec<String>) -> String {
     original.chars().map(|c| {
         if variables.contains(&c.to_string()) { to_mathvar(c).unwrap_or(c) } else { c }
