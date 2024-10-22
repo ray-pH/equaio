@@ -7,6 +7,7 @@
 
 :root {
     --background-color: #FFF8F6;
+    --primary-color: #EF7B45;
     --secondary-color: #FFDBCE;
     --secondary-color-hover: #EECCBF;
 }
@@ -68,5 +69,23 @@ body {
 .navbar-button:hover {
     background-color: var(--secondary-color-hover);
 }
-.navbar-button.left {
+.navbar-left {
+    margin-right: auto;
+}
+.navbar-center {
+    width: fit-content;
+    display: flex;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    align-items: center;
+}
+.navbar-right {
+    margin-left: auto;
+}
+.logo-span {
+    font-size: 2em; 
+    margin-left: 0.5em;
+    padding: 0 0.5em;
+    border-bottom: 4px solid var(--primary-color);
 }

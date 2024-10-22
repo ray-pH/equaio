@@ -52,6 +52,20 @@ fn Home(router: Router) -> Element {
     let convert_mathvar = |s: String| utils::convert_mathvar(s);
     rsx! {
         div {
+            class: "navbar",
+            div {
+                class: "navbar-center",
+                img {
+                    style: "height: 4em",
+                    src: "equaio.png"
+                }
+                span {
+                    class: "logo-span",
+                    "EQUAIO"
+                }
+            }
+        }
+        div {
             class: "main-menu",
             for cat in categories {
                 div {
@@ -87,10 +101,13 @@ fn ProblemPage(router: Router, problem_id: String) -> Element {
     rsx! {
         div {
             class: "navbar",
-            button {
-                class: "navbar-button left",
-                onclick: move |_| { router.write().pop(); },
-                "<"
+            div {
+                class: "navbar-left",
+                button {
+                    class: "navbar-button",
+                    onclick: move |_| { router.write().pop(); },
+                    "<"
+                }
             }
         }
         if let Some(ws_data) = problems_data_map.get(&problem_id) {
