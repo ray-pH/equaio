@@ -66,7 +66,6 @@ pub fn ExpressionSequence(
     seq: WorkableExpressionSequence,  seq_index: usize,  ws: Signal<equaio::worksheet::Worksheet>
 )  -> Element 
 {
-    let expressions = seq.history.iter().map(|line| &line.expr).collect::<Vec<_>>();
     //TODO: load from json
     let block_ctx = equaio::block::BlockContext {
         inverse_ops: pair_map![("+", "-"), ("*", "/")],
@@ -74,8 +73,10 @@ pub fn ExpressionSequence(
         conceal_ops: vec_strings!["*"],
         op_precedence: vec_index_map!["-", "+", "/", "*"]
     };
-    let indexed_blocks = expressions.iter()
-        .enumerate().map(|(i,expr)| (i, Block::from_root_expression_to_alignable_blocks(expr, &block_ctx))).collect::<Vec<_>>();
+    let indexed_blocks = seq.history.iter()
+        .enumerate().map(|(i,line)| (
+            i, line.action.to_string(), 
+            Block::from_root_expression_to_alignable_blocks(&line.expr, &block_ctx))).collect::<Vec<_>>();
     let last_index = indexed_blocks.len() - 1;
     
     let mut active_address = use_signal(|| Vec::<Address>::new());
@@ -99,7 +100,19 @@ pub fn ExpressionSequence(
         class: "expression-sequence-container",
         div {
             class: "expression-sequence-history-container",
-            for (i, (lhs, mid, rhs)) in indexed_blocks {
+            for (i, action_str, (lhs, mid, rhs)) in indexed_blocks {
+                if i != 0 {
+                    div {
+                        class: "expression-line-gap"
+                    }
+                    div {
+                        class: "expression-line-left-bar"
+                    }
+                    div {
+                        class: "expression-line-action",
+                        "{action_str}"
+                    }
+                }
                 div {
                     class: "expression-line",
                     div {
