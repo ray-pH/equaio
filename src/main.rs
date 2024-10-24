@@ -1,4 +1,6 @@
 #![allow(non_snake_case)]
+#![allow(clippy::redundant_closure)]
+#![allow(clippy::needless_return)]
 mod json;
 mod worksheet;
 mod utils;

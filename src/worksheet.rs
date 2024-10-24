@@ -2,7 +2,6 @@ use super::json;
 use super::utils;
 use std::collections::HashMap;
 use dioxus::prelude::*;
-use equaio;
 use equaio::block::Block;
 use equaio::expression::Address;
 use equaio::worksheet::WorkableExpressionSequence;
@@ -25,7 +24,7 @@ fn get_ruleset(rulename: String) -> equaio::rule::RuleSet {
         "algebra_simplify" => json::ALGEBRA_SIMPLIFY_RULES,
         _ => json::ALGEBRA_RULES // TODO: change the default
     };
-    let ruleset = equaio::rule::parse_ruleset_from_json(&rulestr);
+    let ruleset = equaio::rule::parse_ruleset_from_json(rulestr);
     return ruleset.unwrap();
 }
 fn init_worksheet(ws_data: WorksheetData) -> equaio::worksheet::Worksheet {
@@ -86,7 +85,9 @@ pub fn ExpressionSequence(
         .map(|(i,(action, expr))| (i, action.to_string(), Block::from_root_expression(expr, &block_ctx)))
         .collect::<Vec<_>>();
     
+    #[allow(clippy::collapsible_else_if)]
     let address_update_handler: EventHandler<(Address, bool)> = EventHandler::new(move |(addr, bool)| {
+        // bool determines whether to add or remove the address from the active addresses
         if bool {
             if !active_address.read().contains(&addr) { active_address.write().push(addr); }
         } else {
@@ -192,8 +193,8 @@ fn Block(block: Block, active_address: Option<Signal<Vec<Address>>>, on_address_
         BlockType::FractionContainer => {
             classlist.push("block-fraction");
             let children = block.children.unwrap_or_default();
-            let numerator = children.get(0);
-            let denominator = children.get(1);
+            let numerator = children.first();
+            let denominator = children.last();
             if numerator.is_none() || denominator.is_none() { return rsx! { span { "ERROR: FractionContainer"} } }
             let numerator = numerator.unwrap();
             let denominator = denominator.unwrap();
