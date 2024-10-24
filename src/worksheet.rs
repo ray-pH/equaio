@@ -126,7 +126,7 @@ pub fn Worksheet(ws_data: WorksheetData) -> Element {
                         active_address.write().clear();
                         ws.origin_scope().needs_update();
                     },
-                    span { "{action}" }
+                    span { class:"possible-action-caption" , "{action}" }
                     Block { block, active_address: None, on_address_update: |_| {} }
                 }
             }

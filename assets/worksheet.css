@@ -26,6 +26,7 @@
 
 .possible-actions-container {
     margin-top: 0.5em;
+    width: min(40em, 80vw);
 }
 .possible-action-button {
     display: flex;
@@ -35,9 +36,11 @@
     cursor: pointer;
     padding: 0.1em 2em;
     border-radius: 2em;
-    min-width: 40em;
     background-color: rgba(0,0,0,0.1);
 }
 .possible-action-button:hover {
     background-color: rgba(0,0,0,0.2);
+}
+.possible-action-caption {
+    padding:0.5em 0;
 }
