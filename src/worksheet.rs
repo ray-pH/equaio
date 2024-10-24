@@ -19,9 +19,12 @@ pub struct WorksheetData {
     pub initial_expressions: Vec<String>,
 }
 
-fn get_ruleset(_rulename: String) -> equaio::rule::RuleSet {
-    // TODO: load properly
-    let rulestr = json::ALGEBRA_RULES;
+fn get_ruleset(rulename: String) -> equaio::rule::RuleSet {
+    let rulestr = match rulename.as_str() {
+        "algebra" => json::ALGEBRA_RULES,
+        "algebra_simplify" => json::ALGEBRA_SIMPLIFY_RULES,
+        _ => json::ALGEBRA_RULES // TODO: change the default
+    };
     let ruleset = equaio::rule::parse_ruleset_from_json(&rulestr);
     return ruleset.unwrap();
 }
