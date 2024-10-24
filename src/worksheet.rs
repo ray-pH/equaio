@@ -2,10 +2,10 @@ use super::json;
 use super::utils;
 use std::collections::HashMap;
 use dioxus::prelude::*;
-use dioxus_logger::tracing::info;
 use equaio;
 use equaio::block::Block;
 use equaio::expression::Address;
+use equaio::worksheet::WorkableExpressionSequence;
 use equaio::{pair_map, vec_strings, vec_index_map};
 use serde::{Deserialize, Serialize};
 
@@ -47,10 +47,28 @@ fn init_worksheet(ws_data: WorksheetData) -> equaio::worksheet::Worksheet {
 
 #[component]
 pub fn Worksheet(ws_data: WorksheetData) -> Element {
-    let mut ws = use_signal(|| init_worksheet(ws_data));
+    let ws = use_signal(|| init_worksheet(ws_data));
     
-    let seq = ws.write().get(0).unwrap(); // debug
+    rsx! {
+        div {
+            class: "worksheet",
+            for i in 0..ws.read().len() {
+                if let Some(seq) = ws.read().get(i) {
+                    ExpressionSequence { seq, seq_index: 0, ws }
+                }
+            }
+        }
+    }
+    
+}
+
+#[component]
+pub fn ExpressionSequence(
+    seq: WorkableExpressionSequence,  seq_index: usize,  ws: Signal<equaio::worksheet::Worksheet>
+)  -> Element 
+{
     let expressions = seq.history.iter().map(|line| &line.expr).collect::<Vec<_>>();
+    //TODO: load from json
     let block_ctx = equaio::block::BlockContext {
         inverse_ops: pair_map![("+", "-"), ("*", "/")],
         fraction_ops: vec_strings!["/"],
@@ -122,12 +140,10 @@ pub fn Worksheet(ws_data: WorksheetData) -> Element {
                 div {
                     class: "possible-action-button",
                     onclick: move |_| {
-                        info!("applying action {}", i);
-                        let mut seq = ws.write().get(0).unwrap(); // debug
+                        let mut seq = ws.write().get(seq_index).unwrap();
                         seq.try_apply_action_by_index(&active_address.read(), i);
                         ws.write().store(i, seq);
                         active_address.write().clear();
-                        ws.origin_scope().needs_update();
                     },
                     span { class:"possible-action-caption" , "{action}" }
                     Block { block, active_address: None, on_address_update: |_| {} }
