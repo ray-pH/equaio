@@ -65,10 +65,11 @@ type AlignableBlocks = (Option<Block>, Option<Block>, Option<Block>);
 #[derive(PartialEq, Clone)]
 struct GroupedHistory {
     pub history: Vec<equaio::worksheet::ExpressionLine>,
+    pub line_index: usize, // index of the first line in the history
 }
 impl GroupedHistory {
-    pub fn new(history: Vec<equaio::worksheet::ExpressionLine>) -> Self {
-        GroupedHistory { history }
+    pub fn new(history: Vec<equaio::worksheet::ExpressionLine>, line_index: usize) -> Self {
+        GroupedHistory { history, line_index }
     }
     // action_str, alignable_blocks
     pub fn to_block_data(&self, block_ctx: &equaio::block::BlockContext) -> Vec<(String, AlignableBlocks)> {
@@ -83,16 +84,18 @@ impl GroupedHistory {
 fn group_auto_history(history: Vec<equaio::worksheet::ExpressionLine>) -> Vec<GroupedHistory> {
     let mut history_grouped = vec![];
     let mut current_group = vec![];
-    for line in history {
+    let mut current_group_index = 0;
+    for (i,line) in history.iter().enumerate() {
         if line.is_auto_generated {
-            current_group.push(line);
+            current_group.push(line.clone());
         } else {
-            if !current_group.is_empty() { history_grouped.push(GroupedHistory::new(current_group)); }
-            current_group = vec![line];
+            if !current_group.is_empty() { history_grouped.push(GroupedHistory::new(current_group, current_group_index)); }
+            current_group = vec![line.clone()];
+            current_group_index = i;
         }
     }
     
-    if !current_group.is_empty() { history_grouped.push(GroupedHistory::new(current_group)); }
+    if !current_group.is_empty() {  history_grouped.push(GroupedHistory::new(current_group, current_group_index)); }
     return history_grouped;
 }
 
@@ -141,7 +144,7 @@ pub fn ExpressionSequence(
                         is_first: i == 0, is_last: i == last_index,
                         active_address,
                         block_ctx: block_ctx.clone(),
-                        address_update_handler
+                        address_update_handler, ws, seq_index
                     }
                 }
             }
@@ -171,7 +174,9 @@ fn GroupedHistoryBlock(
     is_first: bool, is_last: bool,
     active_address: Signal<Vec<Address>>,
     block_ctx: equaio::block::BlockContext,
-    address_update_handler: EventHandler<(Address, bool)>
+    address_update_handler: EventHandler<(Address, bool)>,
+    seq_index: usize,
+    ws: Signal<equaio::worksheet::Worksheet>
 ) -> Element 
 {
     let is_expanded = use_signal(|| false);
@@ -179,15 +184,18 @@ fn GroupedHistoryBlock(
     let (first_action_str, _) = group_data.first().unwrap().clone();
     let (last_action_str, (last_lhs, last_mid, last_rhs)) = group_data.last().unwrap().clone();
     let is_multiline = group_data.len() > 1;
+    let last_line_index = group.line_index + group_data.len() - 1;
     
     rsx! {
         if *is_expanded.read() {
-            for (action_str, (lhs, mid, rhs)) in group_data.iter().take(group_data.len() - 1){
+            for (i, (action_str, (lhs, mid, rhs))) in group_data.iter().enumerate().take(group_data.len() - 1){
                 ExpressionLine {
                     is_first, is_last: false, is_multiline: false,
                     action_str, 
                     lhs: lhs.clone(), mid: mid.clone(), rhs: rhs.clone(),
-                    active_address, is_expanded, address_update_handler // unused props
+                    line_index: group.line_index + i,
+                    active_address, is_expanded, address_update_handler, // unused props
+                    ws, seq_index
                 }
             }
         } 
@@ -195,7 +203,8 @@ fn GroupedHistoryBlock(
             is_first, is_last, is_multiline,
             action_str: if *is_expanded.read() { last_action_str } else { first_action_str },
             lhs: last_lhs, mid: last_mid, rhs: last_rhs,
-            active_address, is_expanded, address_update_handler
+            line_index: last_line_index,
+            active_address, is_expanded, address_update_handler, ws, seq_index
         }
         
     }
@@ -207,7 +216,9 @@ fn ExpressionLine(
     action_str: String, lhs: Option<Block>, mid: Option<Block>, rhs: Option<Block>,
     active_address: Signal<Vec<Address>>,
     is_expanded: Signal<bool>,
-    address_update_handler: EventHandler<(Address, bool)>
+    address_update_handler: EventHandler<(Address, bool)>,
+    line_index: usize, seq_index: usize,
+    ws: Signal<equaio::worksheet::Worksheet>
 ) -> Element {
     rsx!{
         if !is_first {
@@ -266,6 +277,20 @@ fn ExpressionLine(
                         active_address: if is_last { Some(active_address) } else { None },
                         on_address_update: move |evt| address_update_handler.call(evt)
                     }
+                }
+            }
+        }
+        if !is_last {
+            div {
+                class: "expression-line-right-panel",
+                button {
+                    onclick: move |_| {
+                        let mut seq = ws.write().get(seq_index).unwrap();
+                        seq.reset_to(line_index);
+                        ws.write().store(seq_index, seq);
+                        active_address.write().clear();
+                    },
+                    "reset"
                 }
             }
         }

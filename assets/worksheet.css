@@ -6,7 +6,7 @@
 .expression-sequence-history-container {
     font-size: 1.2em;
     display: grid;
-    grid-template-columns: 1em 1fr auto 1fr;
+    grid-template-columns: 1em 1fr auto 1fr auto;
     align-items: center;
 }
 
@@ -25,11 +25,12 @@
 }
 
 .expression-line-gap {
-    grid-column: 1 / span 4;
+    grid-column: 1 / span 5;
     height: 1.5em;
 }
 .expression-line-left-bar {
     background-color: grey;
+    grid-column: 1;
     grid-row: span 2;
     width: 4px;
     height: 100%;
@@ -38,7 +39,7 @@
 }
 .expression-line-action {
     color: gray;
-    grid-column: 2 / span 3;
+    grid-column: 2 / span 4;
     justify-self: start;
     font-size: 0.6em;
 }
@@ -56,6 +57,26 @@
     background-color: var(--secondary-color);
 }
 .expression-line-expand-button:hover{
+    background-color: var(--secondary-color-hover);
+}
+
+.expression-line-right-panel {
+    opacity: 0;
+    font-size: 0.6em;
+}
+.expression-line-right-panel:hover {
+    opacity: 1;
+}
+.expression-line-right-panel > button{
+    all: unset;
+    padding: 0.5em 1em;
+    border-radius: 0.8em;
+    margin-bottom: 0.5em;
+    color: black;
+    cursor: pointer;
+    background-color: var(--secondary-color);
+}
+.expression-line-right-panel > button:hover{
     background-color: var(--secondary-color-hover);
 }
 
