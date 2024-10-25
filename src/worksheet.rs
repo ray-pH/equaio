@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use dioxus::prelude::*;
 use equaio::block::Block;
 use equaio::expression::Address;
-use equaio::worksheet::WorkableExpressionSequence;
 use equaio::{pair_map, vec_strings, vec_index_map};
 use serde::{Deserialize, Serialize};
 
@@ -61,9 +60,46 @@ pub fn Worksheet(ws_data: WorksheetData) -> Element {
     
 }
 
+type AlignableBlocks = (Option<Block>, Option<Block>, Option<Block>);
+
+#[derive(PartialEq, Clone)]
+struct GroupedHistory {
+    pub history: Vec<equaio::worksheet::ExpressionLine>,
+}
+impl GroupedHistory {
+    pub fn new(history: Vec<equaio::worksheet::ExpressionLine>) -> Self {
+        GroupedHistory { history }
+    }
+    // action_str, alignable_blocks
+    pub fn to_block_data(&self, block_ctx: &equaio::block::BlockContext) -> Vec<(String, AlignableBlocks)> {
+        self.history.iter().map(|line| {
+            let action_str = line.action.to_string();
+            let alignable_blocks = Block::from_root_expression_to_alignable_blocks(&line.expr, block_ctx);
+            (action_str, alignable_blocks)
+        }).collect::<Vec<_>>()
+    }
+}
+
+fn group_auto_history(history: Vec<equaio::worksheet::ExpressionLine>) -> Vec<GroupedHistory> {
+    let mut history_grouped = vec![];
+    let mut current_group = vec![];
+    for line in history {
+        if line.is_auto_generated {
+            current_group.push(line);
+        } else {
+            if !current_group.is_empty() { history_grouped.push(GroupedHistory::new(current_group)); }
+            current_group = vec![line];
+        }
+    }
+    
+    if !current_group.is_empty() { history_grouped.push(GroupedHistory::new(current_group)); }
+    return history_grouped;
+}
+
 #[component]
 pub fn ExpressionSequence(
-    seq: WorkableExpressionSequence,  seq_index: usize,  ws: Signal<equaio::worksheet::Worksheet>
+    seq: equaio::worksheet::WorkableExpressionSequence,  
+    seq_index: usize,  ws: Signal<equaio::worksheet::Worksheet>
 )  -> Element 
 {
     //TODO: load from json
@@ -73,11 +109,9 @@ pub fn ExpressionSequence(
         conceal_ops: vec_strings!["*"],
         op_precedence: vec_index_map!["-", "+", "/", "*"]
     };
-    let indexed_blocks = seq.history.iter()
-        .enumerate().map(|(i,line)| (
-            i, line.action.to_string(), 
-            Block::from_root_expression_to_alignable_blocks(&line.expr, &block_ctx))).collect::<Vec<_>>();
-    let last_index = indexed_blocks.len() - 1;
+    
+    let grouped_history = group_auto_history(seq.history.clone());
+    let last_index = grouped_history.len() - 1;
     
     let mut active_address = use_signal(|| Vec::<Address>::new());
     let possible_actions = seq.get_possible_actions(&active_address.read());
@@ -100,50 +134,14 @@ pub fn ExpressionSequence(
         class: "expression-sequence-container",
         div {
             class: "expression-sequence-history-container",
-            for (i, action_str, (lhs, mid, rhs)) in indexed_blocks {
-                if i != 0 {
-                    div {
-                        class: "expression-line-gap"
-                    }
-                    div {
-                        class: "expression-line-left-bar"
-                    }
-                    div {
-                        class: "expression-line-action",
-                        "{action_str}"
-                    }
-                }
-                div {
-                    class: "expression-line",
-                    div {
-                        class: "expression-line-lhs",
-                        if lhs.is_some() {
-                            Block {
-                                block: lhs.unwrap(), 
-                                active_address: if i == last_index { Some(active_address) } else { None },
-                                on_address_update: move |evt| address_update_handler.call(evt)
-                            }
-                        }
-                    }
-                    div {
-                        class: "expression-line-mid",
-                        if mid.is_some() {
-                            Block {
-                                block: mid.unwrap(), 
-                                active_address: if i == last_index { Some(active_address) } else { None },
-                                on_address_update: move |evt| address_update_handler.call(evt)
-                            }
-                        }
-                    }
-                    div {
-                        class: "expression-line-rhs",
-                        if rhs.is_some() {
-                            Block {
-                                block: rhs.unwrap(), 
-                                active_address: if i == last_index { Some(active_address) } else { None },
-                                on_address_update: move |evt| address_update_handler.call(evt)
-                            }
-                        }
+            for (i, group) in grouped_history.iter().enumerate() {
+                if !group.history.is_empty() {
+                    GroupedHistoryBlock {
+                        group: group.clone(), 
+                        is_first: i == 0, is_last: i == last_index,
+                        active_address,
+                        block_ctx: block_ctx.clone(),
+                        address_update_handler
                     }
                 }
             }
@@ -165,6 +163,113 @@ pub fn ExpressionSequence(
             }
         }
     })
+}
+
+#[component]
+fn GroupedHistoryBlock(
+    group: GroupedHistory, 
+    is_first: bool, is_last: bool,
+    active_address: Signal<Vec<Address>>,
+    block_ctx: equaio::block::BlockContext,
+    address_update_handler: EventHandler<(Address, bool)>
+) -> Element 
+{
+    let is_expanded = use_signal(|| false);
+    let group_data = group.to_block_data(&block_ctx);
+    let (first_action_str, _) = group_data.first().unwrap().clone();
+    let (last_action_str, (last_lhs, last_mid, last_rhs)) = group_data.last().unwrap().clone();
+    let is_multiline = group_data.len() > 1;
+    
+    rsx! {
+        if *is_expanded.read() {
+            for (action_str, (lhs, mid, rhs)) in group_data.iter().take(group_data.len() - 1){
+                ExpressionLine {
+                    is_first, is_last: false, is_multiline: false,
+                    action_str, 
+                    lhs: lhs.clone(), mid: mid.clone(), rhs: rhs.clone(),
+                    active_address, is_expanded, address_update_handler // unused props
+                }
+            }
+        } 
+        ExpressionLine {
+            is_first, is_last, is_multiline,
+            action_str: if *is_expanded.read() { last_action_str } else { first_action_str },
+            lhs: last_lhs, mid: last_mid, rhs: last_rhs,
+            active_address, is_expanded, address_update_handler
+        }
+        
+    }
+}
+
+#[component]
+fn ExpressionLine(
+    is_first: bool, is_last: bool, is_multiline: bool,
+    action_str: String, lhs: Option<Block>, mid: Option<Block>, rhs: Option<Block>,
+    active_address: Signal<Vec<Address>>,
+    is_expanded: Signal<bool>,
+    address_update_handler: EventHandler<(Address, bool)>
+) -> Element {
+    rsx!{
+        if !is_first {
+            div {
+                class: "expression-line-gap"
+            }
+            div {
+                class: "expression-line-left-bar"
+            }
+            div {
+                class: "expression-line-action",
+                "{action_str}"
+                if is_multiline {
+                    span {
+                        class: "expression-line-expand-elipsis",
+                        "..."
+                    }
+                    button {
+                        class: "expression-line-expand-button",
+                        onclick: move |_| { 
+                            let new_value = !*is_expanded.peek();
+                            is_expanded.set(new_value); 
+                        },
+                        if *is_expanded.read() { "hide" } else { "expand" }
+                    }
+                }
+            }
+        }
+        div {
+            class: "expression-line",
+            div {
+                class: "expression-line-lhs",
+                if lhs.is_some() {
+                    Block {
+                        block: lhs.unwrap(), 
+                        active_address: if is_last { Some(active_address) } else { None },
+                        on_address_update: move |evt| address_update_handler.call(evt)
+                    }
+                }
+            }
+            div {
+                class: "expression-line-mid",
+                if mid.is_some() {
+                    Block {
+                        block: mid.unwrap(), 
+                        active_address: if is_last { Some(active_address) } else { None },
+                        on_address_update: move |evt| address_update_handler.call(evt)
+                    }
+                }
+            }
+            div {
+                class: "expression-line-rhs",
+                if rhs.is_some() {
+                    Block {
+                        block: rhs.unwrap(), 
+                        active_address: if is_last { Some(active_address) } else { None },
+                        on_address_update: move |evt| address_update_handler.call(evt)
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[component]
