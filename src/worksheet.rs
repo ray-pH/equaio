@@ -154,7 +154,7 @@ pub fn ExpressionSequence(
                     onclick: move |_| {
                         let mut seq = ws.write().get(seq_index).unwrap();
                         seq.try_apply_action_by_index(&active_address.read(), i);
-                        ws.write().store(i, seq);
+                        ws.write().store(seq_index, seq);
                         active_address.write().clear();
                     },
                     span { class:"possible-action-caption" , "{action}" }
