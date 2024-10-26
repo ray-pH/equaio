@@ -60,8 +60,6 @@ pub fn Worksheet(ws_data: WorksheetData) -> Element {
     
 }
 
-type AlignableBlocks = (Option<Block>, Option<Block>, Option<Block>);
-
 #[derive(PartialEq, Clone)]
 struct GroupedHistory {
     pub history: Vec<equaio::worksheet::ExpressionLine>,
@@ -71,11 +69,10 @@ impl GroupedHistory {
     pub fn new(history: Vec<equaio::worksheet::ExpressionLine>, line_index: usize) -> Self {
         GroupedHistory { history, line_index }
     }
-    // action_str, alignable_blocks
-    pub fn to_block_data(&self, block_ctx: &equaio::block::BlockContext) -> Vec<(String, AlignableBlocks)> {
+    pub fn to_block_data(&self, block_ctx: &equaio::block::BlockContext) -> Vec<(String, Block)> {
         self.history.iter().map(|line| {
             let action_str = line.action.to_string();
-            let alignable_blocks = Block::from_root_expression_to_alignable_blocks(&line.expr, block_ctx);
+            let alignable_blocks = Block::from_root_expression(&line.expr, block_ctx);
             (action_str, alignable_blocks)
         }).collect::<Vec<_>>()
     }
@@ -182,17 +179,17 @@ fn GroupedHistoryBlock(
     let is_expanded = use_signal(|| false);
     let group_data = group.to_block_data(&block_ctx);
     let (first_action_str, _) = group_data.first().unwrap().clone();
-    let (last_action_str, (last_lhs, last_mid, last_rhs)) = group_data.last().unwrap().clone();
+    let (last_action_str, last_block) = group_data.last().unwrap().clone();
     let is_multiline = group_data.len() > 1;
     let last_line_index = group.line_index + group_data.len() - 1;
     
     rsx! {
         if *is_expanded.read() {
-            for (i, (action_str, (lhs, mid, rhs))) in group_data.iter().enumerate().take(group_data.len() - 1){
+            for (i, (action_str, block)) in group_data.iter().enumerate().take(group_data.len() - 1){
                 ExpressionLine {
                     is_first, is_last: false, is_multiline: false,
                     action_str, 
-                    lhs: lhs.clone(), mid: mid.clone(), rhs: rhs.clone(),
+                    block: block.clone(),
                     line_index: group.line_index + i,
                     active_address, is_expanded, address_update_handler, // unused props
                     ws, seq_index
@@ -202,7 +199,7 @@ fn GroupedHistoryBlock(
         ExpressionLine {
             is_first, is_last, is_multiline,
             action_str: if *is_expanded.read() { last_action_str } else { first_action_str },
-            lhs: last_lhs, mid: last_mid, rhs: last_rhs,
+            block: last_block,
             line_index: last_line_index,
             active_address, is_expanded, address_update_handler, ws, seq_index
         }
@@ -213,7 +210,7 @@ fn GroupedHistoryBlock(
 #[component]
 fn ExpressionLine(
     is_first: bool, is_last: bool, is_multiline: bool,
-    action_str: String, lhs: Option<Block>, mid: Option<Block>, rhs: Option<Block>,
+    action_str: String, block: Block,
     active_address: Signal<Vec<Address>>,
     is_expanded: Signal<bool>,
     address_update_handler: EventHandler<(Address, bool)>,
@@ -221,76 +218,51 @@ fn ExpressionLine(
     ws: Signal<equaio::worksheet::Worksheet>
 ) -> Element {
     rsx!{
-        if !is_first {
-            div {
-                class: "expression-line-gap"
-            }
-            div {
-                class: "expression-line-left-bar"
-            }
-            div {
-                class: "expression-line-action",
-                "{action_str}"
-                if is_multiline {
-                    span {
-                        class: "expression-line-expand-elipsis",
-                        "..."
-                    }
-                    button {
-                        class: "expression-line-expand-button",
-                        onclick: move |_| { 
-                            let new_value = !*is_expanded.peek();
-                            is_expanded.set(new_value); 
-                        },
-                        if *is_expanded.read() { "hide" } else { "expand" }
-                    }
-                }
-            }
-        }
         div {
-            class: "expression-line",
+            class: if is_last {"expression-line-container"} else {"expression-line-container not-last"},
             div {
-                class: "expression-line-lhs",
-                if lhs.is_some() {
+                class: "expression-line-left-bar",
+            }
+            div {
+                div {
+                    class: "expression-line-action",
+                    "{action_str}"
+                    if is_multiline {
+                        span {
+                            class: "expression-line-expand-elipsis",
+                            "..."
+                        }
+                        button {
+                            class: "expression-line-expand-button",
+                            onclick: move |_| { 
+                                let new_value = !*is_expanded.peek();
+                                is_expanded.set(new_value); 
+                            },
+                            if *is_expanded.read() { "hide" } else { "expand" }
+                        }
+                    }
+                }
+                div {
+                    class: "expression-line-block",
                     Block {
-                        block: lhs.unwrap(), 
+                        block, 
                         active_address: if is_last { Some(active_address) } else { None },
                         on_address_update: move |evt| address_update_handler.call(evt)
                     }
                 }
             }
-            div {
-                class: "expression-line-mid",
-                if mid.is_some() {
-                    Block {
-                        block: mid.unwrap(), 
-                        active_address: if is_last { Some(active_address) } else { None },
-                        on_address_update: move |evt| address_update_handler.call(evt)
+            if !is_last {
+                div {
+                    class: "expression-line-right-panel",
+                    button {
+                        onclick: move |_| {
+                            let mut seq = ws.write().get(seq_index).unwrap();
+                            seq.reset_to(line_index);
+                            ws.write().store(seq_index, seq);
+                            active_address.write().clear();
+                        },
+                        "reset"
                     }
-                }
-            }
-            div {
-                class: "expression-line-rhs",
-                if rhs.is_some() {
-                    Block {
-                        block: rhs.unwrap(), 
-                        active_address: if is_last { Some(active_address) } else { None },
-                        on_address_update: move |evt| address_update_handler.call(evt)
-                    }
-                }
-            }
-        }
-        if !is_last {
-            div {
-                class: "expression-line-right-panel",
-                button {
-                    onclick: move |_| {
-                        let mut seq = ws.write().get(seq_index).unwrap();
-                        seq.reset_to(line_index);
-                        ws.write().store(seq_index, seq);
-                        active_address.write().clear();
-                    },
-                    "reset"
                 }
             }
         }

@@ -5,45 +5,29 @@
 }
 .expression-sequence-history-container {
     font-size: 1.2em;
-    display: grid;
-    grid-template-columns: 1em 1fr auto 1fr auto;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
 }
 
-.expression-line {
-    display: contents;
-}
-.expression-line-lhs {
-    grid-column: 2;
-    justify-self: end;
-}
-.expression-line-mid {
-    justify-self: center;
-}
-.expression-line-rhs {
-    justify-self: start;
-}
-
-.expression-line-gap {
-    grid-column: 1 / span 5;
-    height: 1.5em;
+.expression-line-container {
+    display: flex;
+    flex-direction: row;
+    padding: 0.5em 1em;
+    
+    &.not-last:hover {
+        background-color: rgba(0,0,0,0.05);
+    }
 }
 .expression-line-left-bar {
     background-color: grey;
-    grid-column: 1;
-    grid-row: span 2;
     width: 4px;
-    height: 100%;
     margin-right: 1em;
     border-radius: 3px;
 }
 .expression-line-action {
     color: gray;
-    grid-column: 2 / span 4;
-    justify-self: start;
     font-size: 0.6em;
 }
-
 .expression-line-expand-elipsis{
     padding: 0 1em;
 }
@@ -55,31 +39,34 @@
     color: black;
     cursor: pointer;
     background-color: var(--secondary-color);
+    &:hover {
+        background-color: var(--secondary-color-hover);
+    }
 }
-.expression-line-expand-button:hover{
-    background-color: var(--secondary-color-hover);
-}
-
-.expression-line-right-panel {
-    opacity: 0;
-    font-size: 0.6em;
-}
-.expression-line-right-panel:hover {
+.expression-line-container:hover .expression-line-right-panel {
     opacity: 1;
 }
-.expression-line-right-panel > button{
-    all: unset;
-    padding: 0.5em 1em;
-    border-radius: 0.8em;
-    margin-bottom: 0.5em;
-    color: black;
-    cursor: pointer;
-    background-color: var(--secondary-color);
+.expression-line-right-panel {
+    margin-left: auto;
+    font-size: 0.6em;
+    opacity: 0;
+    
+    button {
+        all: unset;
+        padding: 0.5em 1em;
+        border-radius: 0.8em;
+        margin-bottom: 0.5em;
+        color: black;
+        cursor: pointer;
+        background-color: var(--secondary-color);
+        &:hover {
+            background-color: var(--secondary-color-hover);
+        }
+    }
 }
-.expression-line-right-panel > button:hover{
-    background-color: var(--secondary-color-hover);
+.expression-line-block {
+    margin-right: 1em;
 }
-
 
 .possible-actions-container {
     margin-top: 0.5em;
@@ -94,9 +81,9 @@
     padding: 0.1em 2em;
     border-radius: 2em;
     background-color: rgba(0,0,0,0.1);
-}
-.possible-action-button:hover {
-    background-color: rgba(0,0,0,0.2);
+    &:hover {
+        background-color: rgba(0,0,0,0.2);
+    }
 }
 .possible-action-caption {
     padding:0.5em 0;
